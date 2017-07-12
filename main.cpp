@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
 	//for now we take the last paramter to be the image file
 	string fileName(argv[argc - 1]);
 	JpegImage testPEG(fileName);
-	nNetwork neuralNet();
+	NNetwork neuralNet();
 	cout << neuralNet.process(testPEG) << endl;
 	return 1;
 }
