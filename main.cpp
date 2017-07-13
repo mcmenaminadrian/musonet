@@ -1,6 +1,8 @@
 #include <iostream>
 #include <string>
-#include "jpegimage.h"
+#include <vector>
+#include "stdint.h"
+#include "jpeglib.h"
 #include "nnetwork.h"
 
 //MUSONET - copyright Adrian McMenamin <adrianmcmenamin@gmail.com>, 2017
@@ -16,10 +18,9 @@ using namespace std;
 int main(int argc, char *argv[])
 {
 	//for now we take the last paramter to be the image file
-	string fileName(argv[argc - 1]);
-	JpegImage testPEG(fileName);
-	NNetwork neuralNet();
-	cout << neuralNet.process(testPEG) << endl;
+	string testJPEG(argv[argc - 1]);
+	NNetwork neuralNet;
+	neuralNet.process(testJPEG);
 	return 1;
 }
 

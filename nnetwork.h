@@ -4,32 +4,34 @@
 class NNetwork
 {
 private:
-	const int logisticTableSize 100;
-	const double logisticTableMax 10.0;
+	const int logisticTableSize;
+	const double logisticTableMax;
 	int row_stride;
 	unsigned int widthJPEG;
 	unsigned int heightJPEG;
-	vector<double> weightsH; //weights into hidden layer from input
-	vector<double> biasHidden; //weights of bias into hidden layer
-	vector<double> biasOutput; //weight(s) of bias into output
-	vector<double> outHidden; //output of hidden layer
-	vector<double> weightsO; //weights of output from hidden to output
-	vector<uint8_t> inputs; //values of input neurons
-	vector<uint8_t> jpegBuffer; //representation of JPEG
-	vector<double> logisticValues; //logistic function table
-	vector<double> logisticDifferential; //logistic function differential
+	std::vector<double> weightsH; //weights into hidden layer from input
+	std::vector<double> biasHidden; //weights of bias into hidden layer
+	std::vector<double> biasOutput; //weight(s) of bias into output
+	std::vector<double> outHidden; //output of hidden layer
+	std::vector<double> weightsO; //weights of output from hidden to output
+	std::vector<uint8_t> inputs; //values of input neurons
+	std::vector<uint8_t> jpegBuffer; //representation of JPEG
+	std::vector<double> logisticValues; //logistic function table
+	std::vector<double> logisticDifferential; //logistic function differential
 	double tableFactor;
 	void primeLogisticTable();
 	double logistic(const double& inValue) const;
-	double calculateDotProduct(bool isRow, int number) const;
+	double dotProduct(const bool isRow, const int number) const;
 	void calculateHiddenValues();
 	void loadJPEG(const std::string& jpegFile);
-	void loadInputs();
+	void loadWeights();
 	double calculateOutputValue() const;
+	void storeScannedLine(JSAMPROW jRow);
+	void processInputs(const int startRow, const int startCol);
 
 public:
 	NNetwork();
-	double process(const std::string& jpegFile);
+	void process(const std::string& jpegFile);
 };	
 
 
