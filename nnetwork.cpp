@@ -58,19 +58,23 @@ double NNetwork::logistic(const double& inValue) const
 void NNetwork::loadWeights()
 {
 	for (int i = 0; i < 20000; i++) {
-		double x = rand()/RAND_MAX;
+		double x = rand();
+		x /= RAND_MAX;
 		weightsH.push_back(x);
 	}
 	for (int j = 0; j < 200; j++) {
-		double y = rand()/RAND_MAX;
+		double y = rand();
+		y /= RAND_MAX;
 		weightsO.push_back(y);
 	}
 	//bias weights for hidden layer
 	for (int k = 0; k < 200; k++) {
-		double z = rand() / RAND_MAX;
+		double z = rand();
+		z /= RAND_MAX;
 		biasHidden.push_back(z);
 	}
-	double zz = rand() / RAND_MAX;
+	double zz = rand();
+	zz /= RAND_MAX;
 	biasOutput.push_back(zz);
 }
 
@@ -205,9 +209,9 @@ void NNetwork::process(const string& jpegFile)
 NNetwork::NNetwork():logisticTableSize(100), logisticTableMax(10.0)
 {
 	//test with same sequence
-	srand(100);
+//	srand(100);
 	//proper psuedo random sequence
-	//srand(time(0));
+	srand(time(0));
 
 	primeLogisticTable();
 	loadWeights();
