@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
+#include "jpeglib.h"
 #include "nnetwork.h"
 
 
@@ -113,10 +114,90 @@ void NNetwork::calculateHiddenValues()
 	}
 }
 
+double NNetwork::calculateOutputValue() const
+{
+	double result = 0.0;
+	for (int i = 0; i < outHidden.size(); i++) {
+		result += outHidden.at(i) * weightsO.at(i);
+	}
+	result += biasOuput(0);
+	return logistic(result);
+}
+
+void NNetwork::storeScannedLine(JSAMPROW sampledLine)
+{
+	for (unsigned int i = 0; i < row_stride; i++) {
+		unsigned char x = *(sampledLine + i);
+		jpegBuffer.push_back(x);
+	}
+}
+
+void NNetwork::loadJPEG(const string & jpegFile)
+	//load the jpeg
+	struct jpeg_decompress_struct cinfo;
+	struct jpeg_error_mgr jerr;
+	FILE* inFile;
+	JSAMPARRAY buffer;
+
+	cout << "Opening " << jpegFile << endl;
+
+	if (((inFile = jpegFile.c_str(), "rb")) == NULL){
+		fprintf(stderr, "cannot open %s\n", jpegFile.c_str());
+		return;
+	}
+
+	cinfo.err = jpeg_std_error(&jerr);
+
+	jpeg_create_decompress(&cinfo);
+	jpeg_stdio_src(&cinfo, inFile);
+
+	jpeg_read_header(&cinfo, TRUE);
+	cinfo.out_color_space = JCS_GRAYSCALE;
+	jpeg_start_decompress(&cinfo);
+	row_stride = cinfo.output_width * cinfo.output_components;
+	setByteWidth(row_stride);
+	buffer = (*cinfo.mem->alloc_sarray) ((j_common_ptr)
+		&cinfo, JPOOL_IMAGE, row_stride, 1);
+
+	while (cinfo.output_scanline < cinfo.output_height) {
+		jpeg_read_scanlines(&cinfo, buffer, 1);
+		storeScannedLine(buffer[0]);
+	}
+	cInfo = cinfo;
+	widthJPEG = cinfo.output_width;
+	heightJPEG = cinfo.output_height;
+
+	jpeg_finish_decompress(&cinfo);
+	jpeg_destroy_decompress(&cinfo);
+	fclose(inFile);
+
+	return;
+}
+
+void NNetwork::processInputs(const int& startRow, const int& startCol)
+{
+	inputs.clear();
+	for (unsigned int i = 0; i < 100; i++) {
+		for (int j = 0; j < 100; j++) {
+			inputs.push_back(jpegBuffer.at(
+				(startRow + i) * widthJPEG + j + startCol));
+		}
+	}
+}
 
 double NNetwork::process(const string& jpegFile)
 {
-	//load the jpeg
+	jpegBuffer.clear();
+	loadJPEG(jpegFile);
+	for (unsigned i = 0; i < heightJPEG; i+= 100) {
+		for (unsigned int j = 0; j < widthJPEG; j+=100) {
+			loadInputs(i, j);
+			calculateHiddenValues();
+			cout << "For JPEG beginning at ( " << i << "," << j;
+			cout << " ) output value is ";
+		       	cout << calculateOutputValue() << endl;
+		}
+	}
 }
 
 
