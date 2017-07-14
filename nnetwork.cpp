@@ -27,6 +27,11 @@ void NNetwork::primeLogisticTable()
 	}
 }
 
+double NNetwork::logisticDifferentialFunc(const double& inValue) const
+{
+	return inValue * (1.0 - inValue);
+}
+
 double NNetwork::logistic(const double& inValue) const
 {
 	double indexD;
@@ -55,11 +60,57 @@ double NNetwork::logistic(const double& inValue) const
 	}
 }
 
+void NNetwork::writeWeights() const
+{
+	ofstream weightStream("nnetweights.txt");
+	for (unsigned int i = 0; i < weightsH.size(); i++) {
+		weightStream << weightsH.at(i);
+		weightStream << " ";
+	}
+	weightStream << endl;
+	for (unsigned int i = 0; i < biasHidden.size(); i++) {
+		weightStream << biasHidden.at(i);
+		weightStream << " ";
+	}
+	weightStream << endl;
+	for (unsigned int i = 0; i < weightsO.size(); i++) {
+		weightStream << weightsO.at(i);
+		weightStream << " ";
+	}
+	weightStream << endl;
+	weightStream << biasOutput.at(0);
+	weightStream << endl;
+	weightStream.close();
+}
+
+
 
 //this is just a filler for now
 void NNetwork::loadWeights()
 {
-	double factor = RAND_MAX;
+	ifstream weightStream("nnetweights.txt");
+	double x;
+	char c;
+	for (int i = 0; i < 20000; i++) {
+		weightStream >> x;
+		weightsH.push_back(x);
+	}
+	weightStream >> c;
+	for (int i = 0; i < 200; i++) {
+		weightStream >> x;
+		biasHidden.push_back(x);
+	}
+	weightStream >> c;
+	for (int i = 0; i < 200; i++) {
+		weightStream >> x;
+		weightsO.push_back(x);
+	}
+	weightStream >> c >> x;
+	biasOutput.push_back(x);
+	weightStream.close();
+		
+
+/*	double factor = RAND_MAX;
 	for (int i = 0; i < 20000; i++) {
 		double x = rand();
 		x /= factor;
@@ -79,6 +130,7 @@ void NNetwork::loadWeights()
 	double zz = rand();
 	zz /= factor;
 	biasOutput.push_back(zz);
+*/
 }
 
 
@@ -128,7 +180,8 @@ double NNetwork::calculateOutputValue() const
 {
 	double result = 0.0;
 	for (unsigned int i = 0; i < outHidden.size(); i++) {
-		result += outHidden.at(i) * weightsO.at(i);
+		double neuronResult = outHidden.at(i) * weightsO.at(i);
+		result += neuronResult;
 	}
 	result += biasOutput.at(0);
 	return logistic(result);
@@ -212,28 +265,23 @@ void NNetwork::loadData(const string& dataFile)
 	}
 }
 
-void NNetwork::writeWeights() const
+void NNetwork::gradientOutputLayer(const double& actual, const double& desired)
 {
-	ofstream weightStream("nnetweights.txt");
-	for (unsigned int i = 0; i < weightsH.size(); i++) {
-		weightStream << weightsH.at(i);
-		weightStream << " ";
+	outGradients.clear();
+	double delta = (desired - actual) * logisticDifferentialFunc(actual);
+	for (int i = 0; i < 200; i++) {
+		outGradients.push_back(outHidden.at(i) * delta);
 	}
-	weightStream << endl;
-	for (unsigned int i = 0; i < biasOutput.size(); i++) {
-		weightStream << biasOutput.at(i);
-		weightStream << " ";
-	}
-	weightStream << endl;
-	for (unsigned int i = 0; i < weightsO.size(); i++) {
-		weightStream << weightsO.at(i);
-		weightStream << " ";
-	}
-	weightStream << endl;
-	weightStream << biasOutput.at(0);
-	weightStream << endl;
-	weightStream.close();
+	outGradients.push_back(delta);
 }
+
+void NNetwork::tryCorrection()
+{
+	for (int i = 0; i < 200; i++) {
+		double oldValue = weightsO.at(i);
+		weightsO.at(i) = outGradients.at(i);
+	}
+} 
 
 void NNetwork::process(const string& jpegFile, const string& dataFile)
 {
@@ -241,6 +289,7 @@ void NNetwork::process(const string& jpegFile, const string& dataFile)
 	loadJPEG(jpegFile);
 	loadData(dataFile);
 	double totalError = 0.0;
+	int cases = 0;
 	for (unsigned i = 0; i < (heightJPEG / 100) * 100; i+= 100) {
 		for (unsigned int j = 0; j < (widthJPEG / 100) * 100; j+=100) {
 			processInputs(i, j);
@@ -249,14 +298,18 @@ void NNetwork::process(const string& jpegFile, const string& dataFile)
 			cout << " ) output value is ";
 			double outputValue = calculateOutputValue();
 		       	cout << outputValue << endl;
-			double error = outputValue -
+			double desiredValue = 
 				(desired.at(i / 100)).at(j / 100);
+			double error = outputValue - desiredValue;
+			gradientOutputLayer(outputValue, desiredValue);
+			tryCorrection();
 			error = error * error;
 			totalError += error;
 			cout << "Squared error is " << error << endl;
+			cases++;
 		}
 	}
-	cout << "Total error is " << totalError << endl;
+	cout << "Mean error is " << totalError / cases << endl;
 	writeWeights();
 }
 

@@ -17,10 +17,12 @@ private:
 	std::vector<uint8_t> inputs; //values of input neurons
 	std::vector<uint8_t> jpegBuffer; //representation of JPEG
 	std::vector<double> logisticValues; //logistic function table
-	std::vector<double> logisticDifferential; //logistic function differential
-	std::vector<std::vector<double> > desired; //from test data - the outcomes we want
+	std::vector<double> logisticDifferential; //logistic func differential
+	std::vector<std::vector<double> > desired; //outcome sought in training
+	std::vector<double> outGradients; //gradient of output from inputs 
 	double tableFactor;
 	void primeLogisticTable();
+	double logisticDifferentialFunc(const double& inValue) const;
 	double logistic(const double& inValue) const;
 	double dotProduct(const bool isRow, const int number) const;
 	void calculateHiddenValues();
@@ -31,6 +33,8 @@ private:
 	double calculateOutputValue() const;
 	void storeScannedLine(JSAMPROW jRow);
 	void processInputs(const int startRow, const int startCol);
+	void gradientOutputLayer(const double& a, const double& d);
+	void tryCorrection();
 
 public:
 	NNetwork();
