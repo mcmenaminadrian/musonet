@@ -18,12 +18,14 @@ private:
 	std::vector<uint8_t> jpegBuffer; //representation of JPEG
 	std::vector<double> logisticValues; //logistic function table
 	std::vector<double> logisticDifferential; //logistic function differential
+	std::vector<std::vector<double> > desired; //from test data - the outcomes we want
 	double tableFactor;
 	void primeLogisticTable();
 	double logistic(const double& inValue) const;
 	double dotProduct(const bool isRow, const int number) const;
 	void calculateHiddenValues();
 	void loadJPEG(const std::string& jpegFile);
+	void loadData(const std::string& dataFile);
 	void loadWeights();
 	double calculateOutputValue() const;
 	void storeScannedLine(JSAMPROW jRow);
@@ -31,7 +33,7 @@ private:
 
 public:
 	NNetwork();
-	void process(const std::string& jpegFile);
+	void process(const std::string& jpegFile, const std::string& dataFile);
 };	
 
 

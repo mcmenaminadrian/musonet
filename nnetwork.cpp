@@ -3,6 +3,8 @@
 #include <ctime>
 #include <vector>
 #include <cmath>
+#include <fstream>
+#include <sstream>
 #include "stdint.h"
 #include "jpeglib.h"
 #include "nnetwork.h"
@@ -57,24 +59,25 @@ double NNetwork::logistic(const double& inValue) const
 //this is just a filler for now
 void NNetwork::loadWeights()
 {
+	double factor = RAND_MAX;
 	for (int i = 0; i < 20000; i++) {
 		double x = rand();
-		x /= RAND_MAX;
+		x /= factor;
 		weightsH.push_back(x);
 	}
 	for (int j = 0; j < 200; j++) {
 		double y = rand();
-		y /= RAND_MAX;
+		y /= factor;
 		weightsO.push_back(y);
 	}
 	//bias weights for hidden layer
 	for (int k = 0; k < 200; k++) {
 		double z = rand();
-		z /= RAND_MAX;
+		z /= factor;
 		biasHidden.push_back(z);
 	}
 	double zz = rand();
-	zz /= RAND_MAX;
+	zz /= factor;
 	biasOutput.push_back(zz);
 }
 
@@ -191,19 +194,46 @@ void NNetwork::processInputs(const int startRow, const int startCol)
 	}
 }
 
-void NNetwork::process(const string& jpegFile)
+void NNetwork::loadData(const string& dataFile)
+{
+	//default set every square to false
+	for (unsigned int i = 0; i < heightJPEG / 100; i++) {
+		desired.push_back(vector<double>(widthJPEG/100, 0.0));
+	}
+	//load the file
+	ifstream dataStream(dataFile);
+	string line;
+	while (getline(dataStream, line)) {
+		istringstream iss(line);
+		unsigned int xCoord, yCoord;
+		char c;
+		iss >> xCoord >> c >> yCoord;
+		(desired.at(yCoord/100)).at(xCoord/100) = 1.0;
+	}
+}
+
+void NNetwork::process(const string& jpegFile, const string& dataFile)
 {
 	jpegBuffer.clear();
 	loadJPEG(jpegFile);
+	loadData(dataFile);
+	double totalError = 0.0;
 	for (unsigned i = 0; i < (heightJPEG / 100) * 100; i+= 100) {
 		for (unsigned int j = 0; j < (widthJPEG / 100) * 100; j+=100) {
 			processInputs(i, j);
 			calculateHiddenValues();
 			cout << "For JPEG beginning at ( " << i << "," << j;
 			cout << " ) output value is ";
-		       	cout << calculateOutputValue() << endl;
+			double outputValue = calculateOutputValue();
+		       	cout << outputValue << endl;
+			double error = outputValue -
+				(desired.at(i / 100)).at(j / 100);
+			error = error * error;
+			totalError += error;
+			cout << "Squared error is " << error << endl;
 		}
 	}
+	cout << "Total error is " << totalError << endl;
 }
 
 NNetwork::NNetwork():logisticTableSize(100), logisticTableMax(10.0)

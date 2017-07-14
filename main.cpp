@@ -18,9 +18,10 @@ using namespace std;
 int main(int argc, char *argv[])
 {
 	//for now we take the last paramter to be the image file
-	string testJPEG(argv[argc - 1]);
+	string testJPEG(argv[argc - 2]);
+	string testData(argv[argc -1]);
 	NNetwork neuralNet;
-	neuralNet.process(testJPEG);
+	neuralNet.process(testJPEG, testData);
 	return 1;
 }
 
