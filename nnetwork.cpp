@@ -212,6 +212,29 @@ void NNetwork::loadData(const string& dataFile)
 	}
 }
 
+void NNetwork::writeWeights() const
+{
+	ofstream weightStream("nnetweights.txt");
+	for (unsigned int i = 0; i < weightsH.size(); i++) {
+		weightStream << weightsH.at(i);
+		weightStream << " ";
+	}
+	weightStream << endl;
+	for (unsigned int i = 0; i < biasOutput.size(); i++) {
+		weightStream << biasOutput.at(i);
+		weightStream << " ";
+	}
+	weightStream << endl;
+	for (unsigned int i = 0; i < weightsO.size(); i++) {
+		weightStream << weightsO.at(i);
+		weightStream << " ";
+	}
+	weightStream << endl;
+	weightStream << biasOutput.at(0);
+	weightStream << endl;
+	weightStream.close();
+}
+
 void NNetwork::process(const string& jpegFile, const string& dataFile)
 {
 	jpegBuffer.clear();
@@ -234,6 +257,7 @@ void NNetwork::process(const string& jpegFile, const string& dataFile)
 		}
 	}
 	cout << "Total error is " << totalError << endl;
+	writeWeights();
 }
 
 NNetwork::NNetwork():logisticTableSize(100), logisticTableMax(10.0)

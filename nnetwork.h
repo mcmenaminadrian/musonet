@@ -27,6 +27,7 @@ private:
 	void loadJPEG(const std::string& jpegFile);
 	void loadData(const std::string& dataFile);
 	void loadWeights();
+	void writeWeights() const;
 	double calculateOutputValue() const;
 	void storeScannedLine(JSAMPROW jRow);
 	void processInputs(const int startRow, const int startCol);
