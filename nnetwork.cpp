@@ -195,8 +195,8 @@ void NNetwork::process(const string& jpegFile)
 {
 	jpegBuffer.clear();
 	loadJPEG(jpegFile);
-	for (unsigned i = 0; i < heightJPEG; i+= 100) {
-		for (unsigned int j = 0; j < widthJPEG; j+=100) {
+	for (unsigned i = 0; i < (heightJPEG / 100) * 100; i+= 100) {
+		for (unsigned int j = 0; j < (widthJPEG / 100) * 100; j+=100) {
 			processInputs(i, j);
 			calculateHiddenValues();
 			cout << "For JPEG beginning at ( " << i << "," << j;
