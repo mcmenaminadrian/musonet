@@ -161,7 +161,7 @@ void NNetwork::gradientOutputLayer(const double& actual, const double& desired)
 	outGradients.clear();
 	double missedBy = desired - actual;
 	for (int i = 0; i < 200; i++) {
-		outGradients.push_back(2 * missedBy *
+		outGradients.push_back(-2 * missedBy *
 			logisticDifferentialFunc(actual) * outHidden.at(i));
 	}
 	//for bias
