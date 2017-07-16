@@ -290,31 +290,32 @@ void NNetwork::process(const string& jpegFile, const string& dataFile)
 	loadData(dataFile);
 	double totalError = 0.0;
 	int cases = 0;
-	for (int j = 0; j < 10000; j++) {
-	for (unsigned i = 0; i < (heightJPEG / 100) * 100; i+= 100) {
-		for (unsigned int j = 0; j < (widthJPEG / 100) * 100; j+=100) {
-			processInputs(i, j);
-			calculateHiddenValues();
-//			cout << "For JPEG beginning at ( " << i << "," << j;
-//			cout << "output value is ";
-			double outputValue = calculateOutputValue();
-//		       	cout << outputValue;
-			double desiredValue = 
-				(desired.at(i / 100)).at(j / 100);
-//			cout << " sought " << desiredValue;
-			double error = outputValue - desiredValue;
-			gradientOutputLayer(outputValue, desiredValue);
-			gradientHiddenLayer(outputValue, desiredValue);
-			tryCorrection(0.5);
-			error = error * error;
-			totalError += error;
-//			cout << " Squared error is " << error << endl;
-			cases++;
+	for (int j = 0; j < 100000; j++) {
+		for (unsigned i = 0; i < (heightJPEG / 100) * 100; i+= 100) {	
+			for (unsigned int j = 0;
+				j < (widthJPEG / 100) * 100; j+=100) {
+				processInputs(i, j);
+				calculateHiddenValues();
+			//cout << "For JPEG beginning at ( " << i << "," << j;
+			//cout << " output value is ";
+				double outputValue = calculateOutputValue();
+		       	//cout << outputValue;
+				double desiredValue = 
+					(desired.at(i / 100)).at(j / 100);
+			//cout << " sought " << desiredValue;
+				double error = outputValue - desiredValue;
+				gradientOutputLayer(outputValue, desiredValue);
+				gradientHiddenLayer(outputValue, desiredValue);
+				tryCorrection(0.5);
+				error = error * error;
+				totalError += error;
+			//cout << " error is " << error << endl;
+				cases++;
+			}
 		}
+		cout << "Mean error is " << totalError / cases << endl;
+		cout << "ITERATION: " << j << endl;
 	}
-	cout << "Mean error is " << totalError / cases << endl;
-	cout << "ITERATION: " << j << endl;
-}
 	writeWeights();
 }
 
