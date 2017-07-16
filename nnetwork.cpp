@@ -12,53 +12,23 @@
 
 using namespace std;
 
-
-void NNetwork::primeLogisticTable()
-{
-	tableFactor = (logisticTableSize - 1) / logisticTableMax;
-	int j = 0;
-	for (double i = 0; i < logisticTableSize; i++) {
-		logisticValues.push_back(1.0/(1.0 + exp(-i/tableFactor)));
-		if (j > 0) {
-			logisticDifferential.push_back(logisticValues.at(j) -
-				logisticValues.at(j - 1));
-		}
-		j++;
-	}
-}
+//==========logistic function stuff==========
 
 double NNetwork::logisticDifferentialFunc(const double& inValue) const
 {
-	return inValue * (1.0 - inValue);
+	double result = inValue * (1.0 - inValue);
+	return result;
 }
 
 double NNetwork::logistic(const double& inValue) const
 {
-	double indexD;
-	int index;
 
-	if (inValue >= 0.0) {
-		indexD = inValue * tableFactor;
-		index = indexD;
-		if (index >= logisticTableSize - 1) {
-			return logisticValues.at(logisticTableSize - 1);
-		} else {
-			return logisticValues.at(index) +
-				logisticDifferential.at(index) * 
-				(indexD - index);
-		}
-	} else {
-		indexD = -inValue * tableFactor;
-		index = indexD;
-		if (index >= logisticTableSize - 1) {
-		       return 1.0 - logisticValues.at(logisticTableSize - 1);
-		} else {
-			return 1.0 - (logisticValues.at(index) +
-				logisticDifferential.at(index) * 
-				(indexD - index));
-		}
-	}
+	double result = 1.0 / (1.0 + exp(-inValue));
+	return result;
 }
+
+
+//==========save and load weights==========
 
 void NNetwork::writeWeights() const
 {
@@ -83,11 +53,9 @@ void NNetwork::writeWeights() const
 	weightStream.close();
 }
 
-
-
-//this is just a filler for now
 void NNetwork::loadWeights()
 {
+
 	ifstream weightStream("nnetweights.txt");
 	double x;
 	char c;
@@ -108,9 +76,9 @@ void NNetwork::loadWeights()
 	weightStream >> c >> x;
 	biasOutput.push_back(x);
 	weightStream.close();
-		
+/*		
 
-/*	double factor = RAND_MAX;
+	double factor = RAND_MAX;
 	for (int i = 0; i < 20000; i++) {
 		double x = rand();
 		x /= factor;
@@ -133,6 +101,7 @@ void NNetwork::loadWeights()
 */
 }
 
+//==========calculate outputs==========
 
 //200 hidden neurons
 //one for each row in input
@@ -186,6 +155,53 @@ double NNetwork::calculateOutputValue() const
 	result += biasOutput.at(0);
 	return logistic(result);
 }
+
+void NNetwork::gradientOutputLayer(const double& actual, const double& desired)
+{
+	outGradients.clear();
+	double missedBy = desired - actual;
+	for (int i = 0; i < 200; i++) {
+		outGradients.push_back(2 * missedBy *
+			logisticDifferentialFunc(actual) * outHidden.at(i));
+	}
+	//for bias
+	outGradients.push_back(-2 * missedBy * 
+		logisticDifferentialFunc(actual) * biasOutput.at(0));
+}
+
+void NNetwork::gradientHiddenLayer(const double& actual, const double& desired)
+{
+	hiddenGradients.clear();
+	double missedBy = desired - actual;
+	for (int i = 0; i < 20000; i++) {
+		hiddenGradients.push_back( -2 * missedBy *
+			weightsO.at(i/100) * 
+			logisticDifferentialFunc(outHidden.at(i / 100)) *
+			inputs.at(i/2));
+	}
+	biasGradients.clear();
+	for (int i = 0; i < 200; i++) {
+		biasGradients.push_back(-2 * missedBy * weightsO.at(i) *
+			logisticDifferentialFunc(outHidden.at(i)));
+	}
+}
+
+void NNetwork::tryCorrection(const double& eta)
+{
+
+	for (int i = 0; i < 200; i++) {
+		weightsO.at(i) -= (eta * outGradients.at(i));
+	}
+	biasOutput.at(0) -= (eta * outGradients.at(200));
+	for (int i = 0; i < 20000; i++) {
+		weightsH.at(i) -= (eta * hiddenGradients.at(i));
+	}
+	for (int i = 0; i < 200; i++) {
+		biasHidden.at(i) -= (eta * biasGradients.at(i));
+	}
+}
+
+//==========image handling==========
 
 void NNetwork::storeScannedLine(JSAMPROW sampledLine)
 {
@@ -241,8 +257,9 @@ void NNetwork::processInputs(const int startRow, const int startCol)
 	inputs.clear();
 	for (unsigned int i = 0; i < 100; i++) {
 		for (int j = 0; j < 100; j++) {
-			inputs.push_back(jpegBuffer.at(
-				(startRow + i) * widthJPEG + j + startCol));
+			double jpegValue = jpegBuffer.at(
+				(startRow + i) * widthJPEG + j + startCol);
+			inputs.push_back(jpegValue/2550);
 		}
 	}
 }
@@ -265,23 +282,6 @@ void NNetwork::loadData(const string& dataFile)
 	}
 }
 
-void NNetwork::gradientOutputLayer(const double& actual, const double& desired)
-{
-	outGradients.clear();
-	double delta = (desired - actual) * logisticDifferentialFunc(actual);
-	for (int i = 0; i < 200; i++) {
-		outGradients.push_back(outHidden.at(i) * delta);
-	}
-	outGradients.push_back(delta);
-}
-
-void NNetwork::tryCorrection()
-{
-	for (int i = 0; i < 200; i++) {
-		double oldValue = weightsO.at(i);
-		weightsO.at(i) = outGradients.at(i);
-	}
-} 
 
 void NNetwork::process(const string& jpegFile, const string& dataFile)
 {
@@ -290,26 +290,31 @@ void NNetwork::process(const string& jpegFile, const string& dataFile)
 	loadData(dataFile);
 	double totalError = 0.0;
 	int cases = 0;
+	for (int j = 0; j < 10000; j++) {
 	for (unsigned i = 0; i < (heightJPEG / 100) * 100; i+= 100) {
 		for (unsigned int j = 0; j < (widthJPEG / 100) * 100; j+=100) {
 			processInputs(i, j);
 			calculateHiddenValues();
-			cout << "For JPEG beginning at ( " << i << "," << j;
-			cout << " ) output value is ";
+//			cout << "For JPEG beginning at ( " << i << "," << j;
+//			cout << "output value is ";
 			double outputValue = calculateOutputValue();
-		       	cout << outputValue << endl;
+//		       	cout << outputValue;
 			double desiredValue = 
 				(desired.at(i / 100)).at(j / 100);
+//			cout << " sought " << desiredValue;
 			double error = outputValue - desiredValue;
 			gradientOutputLayer(outputValue, desiredValue);
-			tryCorrection();
+			gradientHiddenLayer(outputValue, desiredValue);
+			tryCorrection(0.5);
 			error = error * error;
 			totalError += error;
-			cout << "Squared error is " << error << endl;
+//			cout << " Squared error is " << error << endl;
 			cases++;
 		}
 	}
 	cout << "Mean error is " << totalError / cases << endl;
+	cout << "ITERATION: " << j << endl;
+}
 	writeWeights();
 }
 
@@ -319,8 +324,6 @@ NNetwork::NNetwork():logisticTableSize(100), logisticTableMax(10.0)
 //	srand(100);
 	//proper psuedo random sequence
 	srand(time(0));
-
-	primeLogisticTable();
 	loadWeights();
 }
 
