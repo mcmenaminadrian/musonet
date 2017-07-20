@@ -55,30 +55,27 @@ void NNetwork::writeWeights() const
 
 void NNetwork::loadWeights()
 {
-/*
+
 	ifstream weightStream("fullweights.txt");
 	double x;
-	char c;
 	for (int i = 0; i < 2000000; i++) {
 		weightStream >> x;
 		weightsH.push_back(x);
 	}
-	weightStream >> c;
 	for (int i = 0; i < 200; i++) {
 		weightStream >> x;
 		biasHidden.push_back(x);
 	}
-	weightStream >> c;
 	for (int i = 0; i < 200; i++) {
 		weightStream >> x;
 		weightsO.push_back(x);
 	}
-	weightStream >> c >> x;
+	weightStream >> x;
 	biasOutput.push_back(x);
 	weightStream.close();
-*/
-		
 
+		
+/*
 	double factor = RAND_MAX;
 	for (int i = 0; i < 2000000; i++) {
 		double x = rand();
@@ -99,7 +96,7 @@ void NNetwork::loadWeights()
 	double zz = rand();
 	zz /= factor;
 	biasOutput.push_back(zz);
-
+*/
 }
 
 //==========calculate outputs==========
@@ -270,7 +267,7 @@ void NNetwork::process(const string& jpegFile, const string& dataFile)
 	loadData(dataFile);
 	double totalError = 0.0;
 	int cases = 0;
-	for (int k = 0; k < 10; k++) {
+	for (int k = 0; k < 100; k++) {
 		for (unsigned i = 0; i < (heightJPEG / 100) * 100; i+= 100) {	
 			for (unsigned int j = 0;
 				j < (widthJPEG / 100) * 100; j+=100) {
@@ -286,7 +283,7 @@ void NNetwork::process(const string& jpegFile, const string& dataFile)
 				double error = outputValue - desiredValue;
 				gradientOutputLayer(outputValue, desiredValue);
 				gradientHiddenLayer(outputValue, desiredValue);
-				tryCorrection(0.5 - 0.49 * (k/10));
+				tryCorrection(0.005 - 0.00049 * (k/100));
 				error = error * error;
 				totalError += error;
 		//	cout << " error is " << error << endl;
