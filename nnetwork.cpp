@@ -112,18 +112,15 @@ void NNetwork::loadWeights()
 //and for hidden neuron 0, all of row 0 connected
 //and for hidden neuron 1, all of column 0 connected etc 
 
-double NNetwork::dotProduct(const bool isRow, const int number) const
+double NNetwork::dotProduct(const int number) const
 {
+
 	double result = 0.0;
-	if (isRow) {
-		for (int i = 0; i < 100; i++) {
-			result += inputs.at(number * 100 + i) *
-				weightsH.at(number * 200 + i);
-		}
-	} else {
-		for (int i = 0; i < 100; i++) {
-			result += inputs.at(i * 100 + number) *
-				weightsH.at(100 + number * 200 + i);
+	for (int i = 0; i < 5; i++) {
+		for (int j = 0; j < 10; j++) {
+			unsigned int node = (number/10) * 500 +
+				number%10 * 10 + i * 100 + j;
+			result += inputs.at(node) * weightsH.at(node);
 		}
 	}
 	return result;
@@ -133,6 +130,9 @@ void NNetwork::calculateHiddenValues()
 {
 	outHidden.clear();
 	for (int i = 0; i < 200; i++) {
+		outHidden.push_back(logistic(dotProduct(i)));
+	}
+/*
 		if (i%2 == 0) {
 			//row
 			outHidden.push_back(logistic(dotProduct(true, i/2)
@@ -142,7 +142,7 @@ void NNetwork::calculateHiddenValues()
 			outHidden.push_back(logistic(dotProduct(false, i/2)
 				+ biasHidden.at(i)));
 		}
-	}
+	} */
 }
 
 double NNetwork::calculateOutputValue() const
@@ -173,11 +173,12 @@ void NNetwork::gradientHiddenLayer(const double& actual, const double& desired)
 {
 	hiddenGradients.clear();
 	double missedBy = desired - actual;
-	for (int i = 0; i < 20000; i++) {
-		hiddenGradients.push_back( -2 * missedBy *
-			weightsO.at(i/100) * 
-			logisticDifferentialFunc(outHidden.at(i / 100)) *
-			inputs.at(i/2));
+	for (int i = 0; i < 10000; i++) {
+		int outputNode = (i / 500) * 10 + (i % 100) / 10;
+		hiddenGradients.push_back(-2 * missedBy *
+			weightsO.at(outputNode) *
+			logisticDifferentialFunc(outHidden.at(outputNode)) *
+			inputs.at(i));
 	}
 	biasGradients.clear();
 	for (int i = 0; i < 200; i++) {
@@ -193,7 +194,7 @@ void NNetwork::tryCorrection(const double& eta)
 		weightsO.at(i) -= (eta * outGradients.at(i));
 	}
 	biasOutput.at(0) -= (eta * outGradients.at(200));
-	for (int i = 0; i < 20000; i++) {
+	for (int i = 0; i < 10000; i++) {
 		weightsH.at(i) -= (eta * hiddenGradients.at(i));
 	}
 	for (int i = 0; i < 200; i++) {
@@ -259,7 +260,7 @@ void NNetwork::processInputs(const int startRow, const int startCol)
 		for (int j = 0; j < 100; j++) {
 			double jpegValue = jpegBuffer.at(
 				(startRow + i) * widthJPEG + j + startCol);
-			inputs.push_back(jpegValue/2550);
+			inputs.push_back(jpegValue/1000);
 		}
 	}
 }
@@ -290,7 +291,7 @@ void NNetwork::process(const string& jpegFile, const string& dataFile)
 	loadData(dataFile);
 	double totalError = 0.0;
 	int cases = 0;
-	for (int k = 0; k < 1000; k++) {
+	for (int k = 0; k < 100; k++) {
 		for (unsigned i = 0; i < (heightJPEG / 100) * 100; i+= 100) {	
 			for (unsigned int j = 0;
 				j < (widthJPEG / 100) * 100; j+=100) {
@@ -306,7 +307,7 @@ void NNetwork::process(const string& jpegFile, const string& dataFile)
 				double error = outputValue - desiredValue;
 				gradientOutputLayer(outputValue, desiredValue);
 				gradientHiddenLayer(outputValue, desiredValue);
-				tryCorrection(0.00001 - 0.000009 * (k/1000));
+				tryCorrection(0.1);
 				error = error * error;
 				totalError += error;
 		//	cout << " error is " << error << endl;

@@ -26,7 +26,7 @@ private:
 	void primeLogisticTable();
 	double logisticDifferentialFunc(const double& inValue) const;
 	double logistic(const double& inValue) const;
-	double dotProduct(const bool isRow, const int number) const;
+	double dotProduct(const int number) const;
 	void calculateHiddenValues();
 	void loadJPEG(const std::string& jpegFile);
 	void loadData(const std::string& dataFile);
